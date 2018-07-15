@@ -1,0 +1,6 @@
+C:\Users\Catalyse\Documents\LogicCircuitToHDLConverter\LogicCircuitToHDLConverter\bin\Debug\LogicCircuitToHDLConverter.exe.config
+C:\Users\Catalyse\Documents\LogicCircuitToHDLConverter\LogicCircuitToHDLConverter\bin\Debug\LogicCircuitToHDLConverter.exe
+C:\Users\Catalyse\Documents\LogicCircuitToHDLConverter\LogicCircuitToHDLConverter\bin\Debug\LogicCircuitToHDLConverter.pdb
+C:\Users\Catalyse\Documents\LogicCircuitToHDLConverter\LogicCircuitToHDLConverter\obj\Debug\LogicCircuitToHDLConverter.csprojResolveAssemblyReference.cache
+C:\Users\Catalyse\Documents\LogicCircuitToHDLConverter\LogicCircuitToHDLConverter\obj\Debug\LogicCircuitToHDLConverter.exe
+C:\Users\Catalyse\Documents\LogicCircuitToHDLConverter\LogicCircuitToHDLConverter\obj\Debug\LogicCircuitToHDLConverter.pdb
