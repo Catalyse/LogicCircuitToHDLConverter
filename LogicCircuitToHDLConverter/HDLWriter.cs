@@ -42,11 +42,12 @@ namespace LogicCircuitToHDLConverter
 
         private static string WriteParts(LogicalCircuit circuit, string fileString)
         {
-            foreach(var gate in circuit.gates)
+            /*foreach(var gate in circuit.gates)
             {
-
                 fileString += gate.WriteGateHDL();
             }
+            return fileString;*/
+            return "";
         }
 
         private static string WriteINBlock(LogicalCircuit circuit, string fileString)
