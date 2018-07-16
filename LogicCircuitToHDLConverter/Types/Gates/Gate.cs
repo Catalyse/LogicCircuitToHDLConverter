@@ -26,6 +26,8 @@ namespace LogicCircuitToHDLConverter
     {
         public CircuitSymbol symbol;
         public string HDLGateNotation;
+        public Dictionary<Coords, WireGroup> gateMap;
+
         public readonly Dictionary<int, GatePinOffset> LeftPinOffset = new Dictionary<int, GatePinOffset>
         {
             { 1, new GatePinOffset(0, 2) },
@@ -71,8 +73,15 @@ namespace LogicCircuitToHDLConverter
         public Gate(CircuitSymbol _symbol)
         {
             symbol = _symbol;
+            gateMap = new Dictionary<Coords, WireGroup>();
         }
 
+        /// <summary>
+        /// NOTE: There is a CUSTOM implementation of this method for the NOT gate
+        /// </summary>
+        /// <param name="inputs"></param>
+        /// <param name="outputName"></param>
+        /// <returns></returns>
         public string WriteGateHDL(List<string> inputs, string outputName)
         {
             int size = GetSize();
@@ -102,6 +111,10 @@ namespace LogicCircuitToHDLConverter
             return output;
         }
 
+        /// <summary>
+        /// This read the gate moniker and determines the number of left inputs
+        /// </summary>
+        /// <returns></returns>
         public int GetSize()
         {
             var identifier = symbol.CircuitId.Substring(32, 2);
@@ -119,6 +132,33 @@ namespace LogicCircuitToHDLConverter
                 {
                     if(group.coords.Exists(x => x.x == baseCoord.x + LeftPinOffset[size].OffsetX && x.y == baseCoord.y + LeftPinOffset[size].OffsetY + i))
                     {
+                        return true;
+                    }
+                }
+            }
+            else if (size == 2)
+            {
+                return group.coords.Exists(x => x.x == baseCoord.x + LeftPinOffset[size].OffsetX && x.y == baseCoord.y + LeftPinOffset[size].OffsetY) ||
+                    group.coords.Exists(x => x.x == baseCoord.x + LeftPinOffset[size].OffsetX && x.y == baseCoord.y + LeftPinOffset[size].OffsetY + 2);
+            }
+            else
+            {
+                return group.coords.Exists(x => x.x == baseCoord.x + LeftPinOffset[1].OffsetX && x.y == baseCoord.y + LeftPinOffset[1].OffsetY);
+            }
+            return false;
+        }
+
+        public bool MapGroupToInput(WireGroup group)
+        {
+            int size = GetSize();
+            Coords baseCoord = symbol.Location;
+            if (size > 2)
+            {
+                for (int i = 0; i < size; i++)
+                {
+                    if (group.coords.Exists(x => x.x == baseCoord.x + LeftPinOffset[size].OffsetX && x.y == baseCoord.y + LeftPinOffset[size].OffsetY + i))
+                    {
+                        gateMap.Add(new Coords(baseCoord.x + LeftPinOffset[size].OffsetX, baseCoord.y + LeftPinOffset[size].OffsetY + i), group);
                         return true;
                     }
                 }

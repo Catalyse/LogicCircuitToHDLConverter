@@ -10,16 +10,11 @@ namespace LogicCircuitToHDLConverter
     {
         static void Main(string[] args)
         {
-            List<LogicalCircuit> test = Converter.ParseXMLDocument();
-            List<string> inputs = new List<string>
-            {
-                "a",
-                "b",
-                "c",
-                "d"
-            };
-            var testString = test[0].gates[0].WriteGateHDL(inputs, "testOutput");
-            Console.WriteLine(testString);
+            Console.WriteLine("Logic Circuit to HDL Converter");
+            Console.WriteLine("By Taylor May");
+            Console.Write("Please enter the full path of your LogicCircuit save file: ");
+            List<LogicalCircuit> test = Converter.ParseXMLDocument(Console.ReadLine());
+            HDLWriter.WriteDocument(test);
             Console.Write("Press any key to close the window.");
             Console.ReadKey();
         }

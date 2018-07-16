@@ -39,10 +39,10 @@ namespace LogicCircuitToHDLConverter
             { "Wire" , typeof(Wire) }
         };
 
-        public static List<LogicalCircuit> ParseXMLDocument()
+        public static List<LogicalCircuit> ParseXMLDocument(string docLocation)
         {
             XmlDocument doc = new XmlDocument();
-            doc.Load(@"C:\Users\Catalyse\Desktop\TestProject.CircuitProject");
+            doc.Load(docLocation);
 
             XmlNode primaryNode = doc.LastChild;
 

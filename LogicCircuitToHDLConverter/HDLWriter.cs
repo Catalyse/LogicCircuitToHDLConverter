@@ -10,7 +10,13 @@ namespace LogicCircuitToHDLConverter
     {
         public static void WriteDocument(List<LogicalCircuit> circuits)
         {
-            string path = @"C:\Users\Catalyse\Desktop\HDLTest\";
+            while (true)
+            {
+                Console.Write("Please enter a folder to output HDL files to: ");
+                string path = Console.ReadLine();
+                if (path != "") break;
+                Console.WriteLine("A path must be entered!");
+            }
             string fileString = "";
 
             foreach(var circuit in circuits)
@@ -36,7 +42,11 @@ namespace LogicCircuitToHDLConverter
 
         private static string WriteParts(LogicalCircuit circuit, string fileString)
         {
-            throw new NotImplementedException();
+            foreach(var gate in circuit.gates)
+            {
+
+                fileString += gate.WriteGateHDL();
+            }
         }
 
         private static string WriteINBlock(LogicalCircuit circuit, string fileString)
