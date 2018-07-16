@@ -36,7 +36,7 @@ namespace LogicCircuitToHDLConverter
 
         private static string WriteParts(LogicalCircuit circuit, string fileString)
         {
-
+            throw new NotImplementedException();
         }
 
         private static string WriteINBlock(LogicalCircuit circuit, string fileString)

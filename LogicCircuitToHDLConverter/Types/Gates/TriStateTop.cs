@@ -7,11 +7,14 @@ using System.Xml;
 
 namespace LogicCircuitToHDLConverter
 {
-    public class TriStateTop : Gate, ICanWriteHDL
+    public class TriStateTop : Gate
     {
         public static readonly int GateIdentifierMin = 0xB0200;
         public static readonly int GateIdentifierMax = 0xB0200;
 
-        public TriStateTop(CircuitSymbol _symbol) : base(_symbol) { }
+        public TriStateTop(CircuitSymbol _symbol) : base(_symbol)
+        {
+            HDLGateNotation = "UNSUPPORTED";
+        }
     }
 }

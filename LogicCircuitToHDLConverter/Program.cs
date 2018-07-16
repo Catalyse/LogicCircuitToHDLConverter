@@ -10,7 +10,16 @@ namespace LogicCircuitToHDLConverter
     {
         static void Main(string[] args)
         {
-            Converter.ParseXMLDocument();
+            List<LogicalCircuit> test = Converter.ParseXMLDocument();
+            List<string> inputs = new List<string>
+            {
+                "a",
+                "b",
+                "c",
+                "d"
+            };
+            var testString = test[0].gates[0].WriteGateHDL(inputs, "testOutput");
+            Console.WriteLine(testString);
             Console.Write("Press any key to close the window.");
             Console.ReadKey();
         }

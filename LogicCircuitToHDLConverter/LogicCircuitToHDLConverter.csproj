@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="HDLWriter.cs" />
     <Compile Include="Types\Coords.cs" />
     <Compile Include="Types\WireGroup.cs" />
     <Compile Include="Types\LogicalCircuit.cs" />

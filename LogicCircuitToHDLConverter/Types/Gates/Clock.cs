@@ -7,11 +7,14 @@ using System.Xml;
 
 namespace LogicCircuitToHDLConverter
 {
-    public class Clock : Gate, ICanWriteHDL
+    public class Clock : Gate
     {
         public static readonly int GateIdentifierMin = 0x10000;
         public static readonly int GateIdentifierMax = 0x10000;
 
-        public Clock(CircuitSymbol _symbol) : base(_symbol) { }
+        public Clock(CircuitSymbol _symbol) : base(_symbol)
+        {
+            HDLGateNotation = "Clock";
+        }
     }
 }

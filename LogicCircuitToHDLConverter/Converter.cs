@@ -86,7 +86,10 @@ namespace LogicCircuitToHDLConverter
             foreach(var group in logicalCircuits)
             {
                 circuits = ConnectSymbolsToCircuits(group.circuits, symbols, group);
-                group.wireGroups = CombineWires(group.wires);
+                if(group.wires.Count > 0)
+                {
+                    group.wireGroups = CombineWires(group.wires);
+                }
             }
 
             logicalCircuits = CheckForCircuitLink(logicalCircuits);

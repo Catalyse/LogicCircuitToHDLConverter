@@ -7,11 +7,14 @@ using System.Xml;
 
 namespace LogicCircuitToHDLConverter
 {
-    public class Or : Gate, ICanWriteHDL
+    public class Or : Gate
     {
         public static readonly int GateIdentifierMin = 0x30200;
         public static readonly int GateIdentifierMax = 0x31200;
 
-        public Or(CircuitSymbol _symbol) : base(_symbol) { }
+        public Or(CircuitSymbol _symbol) : base(_symbol)
+        {
+            HDLGateNotation = "Or";
+        }
     }
 }
