@@ -13,12 +13,14 @@ namespace LogicCircuitToHDLConverter
         public List<Coords> coords;
         public int groupChannelSize;
         public List<string> inputList;
+        public List<string> outputList;
 
         public WireGroup(Wire wire)
         {
             coords = new List<Coords>();
             wires = new List<Wire>();
             inputList = new List<string>();
+            outputList = new List<string>();
             Add(wire);
         }
 

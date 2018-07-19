@@ -42,8 +42,8 @@ namespace LogicCircuitToHDLConverter
         public static List<LogicalCircuit> ParseXMLDocument(string docLocation)
         {
             XmlDocument doc = new XmlDocument();
-            //doc.Load(docLocation);
-            doc.Load(@"C:/Users/Catalyse/Desktop/TestProject.CircuitProject");
+            doc.Load(docLocation);
+            //doc.Load(@"C:/Users/Catalyse/Desktop/TestProject.CircuitProject");
 
             XmlNode primaryNode = doc.LastChild;
 
@@ -129,6 +129,7 @@ namespace LogicCircuitToHDLConverter
                     newName = name + i;
                     if (!circuit.outputNames.Contains(newName))
                     {
+                        circuit.outputNames.Add(newName);
                         return newName;
                     }
                     i++;
@@ -148,23 +149,37 @@ namespace LogicCircuitToHDLConverter
                     {
                         pinLocation.x = pinLocation.x + temp.rightOffset.OffsetX;
                         pinLocation.y = pinLocation.y + temp.rightOffset.OffsetY;
+                        for (int i = 0; i < circuit.wireGroups.Count; i++)
+                        {
+                            if (circuit.wireGroups[i].coords.Exists(x => x.x == pinLocation.x && x.y == pinLocation.y))
+                            {
+                                circuit.wireGroups[i].inputList.Add(temp.Name);
+                                circuit.outputNames.Add(temp.Name);
+                                break;
+                            }
+                        }
+                    }
+                    else if(temp.Type == PinType.Output)
+                    {
+                        pinLocation.x = pinLocation.x + temp.leftOffset.OffsetX;
+                        pinLocation.y = pinLocation.y + temp.leftOffset.OffsetY;
+                        for (int i = 0; i < circuit.wireGroups.Count; i++)
+                        {
+                            if (circuit.wireGroups[i].coords.Exists(x => x.x == pinLocation.x && x.y == pinLocation.y))
+                            {
+                                circuit.wireGroups[i].outputList.Add(temp.Name);
+                                circuit.outputNames.Add(temp.Name);
+                                break;
+                            }
+                        }
                     }
                     else
                     {
                         continue;
                     }
-                    for(int i = 0; i < circuit.wireGroups.Count; i++)
-                    {
-                        if(circuit.wireGroups[i].coords.Exists(x => x.x == pinLocation.x && x.y == pinLocation.y))
-                        {
-                            circuit.wireGroups[i].inputList.Add(temp.Name);
-                            circuit.outputNames.Add(temp.Name);
-                            break;
-                        }
-                    }
                 }
             }
-            foreach(var gate in circuit.gates)
+            foreach (var gate in circuit.gates)
             {
                 Coords pinLocation = new Coords(gate.Symbol.Location);
                 pinLocation.x = pinLocation.x + gate.RightPinOffset[gate.GetSize()].OffsetX;

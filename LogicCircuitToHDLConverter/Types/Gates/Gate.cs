@@ -87,23 +87,68 @@ namespace LogicCircuitToHDLConverter
         {
             int size = GetSize();
             string output = "";
-            string tempName = OutputName;
+            string tempName = "";
+            string overrideOutputName = "";
+
+            bool gateConnectsToOutput = false;
+            Coords outputCoords = new Coords(Symbol.Location);
+            outputCoords.x = outputCoords.x + RightPinOffset[size].OffsetX;
+            outputCoords.y = outputCoords.y + RightPinOffset[size].OffsetY;
+            foreach(var group in groups)
+            {
+                if (ConnectsToRightWireGroup(group))
+                {
+                    if(group.outputList.Count > 0)
+                    {
+                        gateConnectsToOutput = true;
+                        overrideOutputName = group.outputList[0];
+                        tempName = overrideOutputName;
+                    }
+                }
+            }
+            if (!gateConnectsToOutput)
+            {
+                tempName = OutputName;
+            }
+
             Dictionary<int, string> inputs = FindConnectedGroups(groups);
             if (inputs.Count == size)
             {
                 if (size > 2)
                 {
-                    output += "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + OutputName + ");";
+                    if (gateConnectsToOutput)
+                        tempName = Converter.CheckUnusedName(overrideOutputName, circuit);
+                    else
+                        tempName = Converter.CheckUnusedName(OutputName, circuit);
+
+                    output += "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + tempName + ");" + Environment.NewLine;
                     for (int i = 2; i < inputs.Count; i++)
                     {
-                        output += "\t" + HDLGateNotation + "(a=" + tempName + ", b=" + inputs[i];
-                        tempName = Converter.CheckUnusedName(tempName, circuit);
-                        output += ", out=" + tempName + ");";
+                        if (i == (inputs.Count - 1))
+                        {
+                            output += "\t" + HDLGateNotation + "(a=" + tempName + ", b=" + inputs[i];
+
+                            if (gateConnectsToOutput)
+                                tempName = overrideOutputName;
+                            else
+                                tempName = OutputName;
+                            output += ", out=" + tempName + ");" + Environment.NewLine;
+                        }
+                        else
+                        {
+                            output += "\t" + HDLGateNotation + "(a=" + tempName + ", b=" + inputs[i];
+                            if (gateConnectsToOutput)
+                                tempName = Converter.CheckUnusedName(overrideOutputName, circuit);
+                            else
+                                tempName = Converter.CheckUnusedName(OutputName, circuit);
+
+                            output += ", out=" + tempName + ");" + Environment.NewLine;
+                        }
                     }
                 }
                 else
                 {
-                    return "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + OutputName + ");";
+                    return "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + tempName + ");" + Environment.NewLine;
                 }
             }
             else
@@ -157,7 +202,7 @@ namespace LogicCircuitToHDLConverter
         public bool ConnectsToLeftWireGroup(WireGroup group)
         {
             int size = GetSize();
-            Coords baseCoord = Symbol.Location;
+            Coords baseCoord = new Coords(Symbol.Location);
             if(size > 2)
             {
                 for (int i = 0; i < size; i++)
@@ -182,7 +227,7 @@ namespace LogicCircuitToHDLConverter
 
         public bool ConnectsToRightWireGroup(WireGroup group)
         {
-            Coords baseCoord = Symbol.Location;
+            Coords baseCoord = new Coords(Symbol.Location);
             baseCoord.x = baseCoord.x + RightPinOffset[GetSize()].OffsetX;
             baseCoord.y = baseCoord.y + RightPinOffset[GetSize()].OffsetY;
 

@@ -15,8 +15,8 @@ namespace LogicCircuitToHDLConverter
             while (true)
             {
                 Console.Write("Please enter a folder to output HDL files to: ");
-                //string path = Console.ReadLine();
-                path = @"C:/Users/Catalyse/Desktop/HDLTest/test.hdl";
+                path = Console.ReadLine();
+                //path = @"C:/Users/Catalyse/Desktop/HDLTest/test.hdl";
                 if (path != "") break;
                 Console.WriteLine("A path must be entered!");
             }
@@ -27,7 +27,7 @@ namespace LogicCircuitToHDLConverter
                 fileString += "//This file was created with LogicCircuitToHDLConverter" + Environment.NewLine;
                 fileString += "//Created by: Taylor May" + Environment.NewLine;
                 fileString += "//GitHub: https://github.com/Catalyse" + Environment.NewLine;
-                fileString += "//FileName: " + /*filename +*/ Environment.NewLine;
+                fileString += "//FileName: " + circuit.Notation + Environment.NewLine;
                 fileString += "" + Environment.NewLine;
                 fileString += "CHIP " + circuit.Notation + " { " + Environment.NewLine;
                 //Write IN
@@ -35,9 +35,10 @@ namespace LogicCircuitToHDLConverter
                 //Write OUT
                 fileString = WriteOutBlock(circuit, fileString);
                 //Write Parts
+                fileString += Environment.NewLine;
                 fileString += "\tPARTS:" + Environment.NewLine;
                 fileString = WriteParts(circuit, fileString);
-                fileString += Environment.NewLine + "}" + Environment.NewLine;
+                fileString += "}" + Environment.NewLine;
             }
 
             File.WriteAllText(path, fileString);
