@@ -16,6 +16,7 @@ namespace LogicCircuitToHDLConverter
         public List<WireGroup> wireGroups;
         public List<Wire> wires;
         public List<Gate> gates;
+        public List<string> outputNames;
 
         public LogicalCircuit(LogicalCircuit circuit)
         {
@@ -28,6 +29,7 @@ namespace LogicCircuitToHDLConverter
             wireGroups = circuit.wireGroups;
             wires = circuit.wires;
             gates = circuit.gates;
+            outputNames = circuit.outputNames;
         }
 
         public LogicalCircuit(XmlNode node)
@@ -37,6 +39,7 @@ namespace LogicCircuitToHDLConverter
             gates = new List<Gate>();
             wires = new List<Wire>();
             locationSymbols = new List<CircuitSymbol>();
+            outputNames = new List<string>();
 
             foreach (XmlNode child in node.ChildNodes)
             {

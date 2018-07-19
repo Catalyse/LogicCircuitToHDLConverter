@@ -24,6 +24,12 @@ namespace LogicCircuitToHDLConverter
             y = _y;
         }
 
+        public Coords(Coords coord)
+        {
+            x = coord.x;
+            y = coord.y;
+        }
+
         public static bool operator ==(Coords a, Coords b)
         {
             if (a.x == b.x && a.y == b.y) return true;

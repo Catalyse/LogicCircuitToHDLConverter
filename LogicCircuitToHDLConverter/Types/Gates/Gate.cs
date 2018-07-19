@@ -24,9 +24,10 @@ namespace LogicCircuitToHDLConverter
 
     public class Gate
     {
-        public CircuitSymbol symbol;
+        public CircuitSymbol Symbol;
         public string HDLGateNotation;
         public Dictionary<Coords, WireGroup> gateMap;
+        public string OutputName;
 
         public readonly Dictionary<int, GatePinOffset> LeftPinOffset = new Dictionary<int, GatePinOffset>
         {
@@ -72,7 +73,7 @@ namespace LogicCircuitToHDLConverter
 
         public Gate(CircuitSymbol _symbol)
         {
-            symbol = _symbol;
+            Symbol = _symbol;
             gateMap = new Dictionary<Coords, WireGroup>();
         }
 
@@ -82,26 +83,27 @@ namespace LogicCircuitToHDLConverter
         /// <param name="inputs"></param>
         /// <param name="outputName"></param>
         /// <returns></returns>
-        public string WriteGateHDL(List<string> inputs, string outputName)
+        public string WriteGateHDL(List<WireGroup> groups, LogicalCircuit circuit)
         {
             int size = GetSize();
             string output = "";
-            int outputIterator = 1;
+            string tempName = OutputName;
+            Dictionary<int, string> inputs = FindConnectedGroups(groups);
             if (inputs.Count == size)
             {
                 if (size > 2)
                 {
-                    output += "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + outputName + outputIterator + ");";
-                    outputIterator++;
+                    output += "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + OutputName + ");";
                     for (int i = 2; i < inputs.Count; i++)
                     {
-                        output += "\t" + HDLGateNotation + "(a=" + outputName + (outputIterator - 1) + ", b=" + inputs[i] + ", out=" + outputName + outputIterator + ");";
-                        outputIterator++;
+                        output += "\t" + HDLGateNotation + "(a=" + tempName + ", b=" + inputs[i];
+                        tempName = Converter.CheckUnusedName(tempName, circuit);
+                        output += ", out=" + tempName + ");";
                     }
                 }
                 else
                 {
-                    return "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + outputName + ");";
+                    return "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + OutputName + ");";
                 }
             }
             else
@@ -111,21 +113,51 @@ namespace LogicCircuitToHDLConverter
             return output;
         }
 
+        private Dictionary<int, string> FindConnectedGroups(List<WireGroup> groups)
+        {
+            Dictionary<int, string> returnDictionary = new Dictionary<int, string>();
+            for(int i = 0; i < GetSize(); i++)
+            {
+                Coords current = new Coords(Symbol.Location);
+                current.x = current.x + LeftPinOffset[GetSize()].OffsetX;
+                if(i == 1 && GetSize() == 2)
+                {
+                    current.y = current.y + LeftPinOffset[GetSize()].OffsetY + 2;
+                }
+                else
+                {
+                    current.y = current.y + LeftPinOffset[GetSize()].OffsetY + i;
+                }
+                foreach(var group in groups)
+                {
+                    if (group.coords.Exists(x => x.x == current.x && x.y == current.y))
+                    {
+                        returnDictionary.Add(i, group.inputList[0]);
+                    }
+                }
+            }
+            if(returnDictionary.Count != GetSize())
+            {
+                throw new Exception("Gate -- FindConnectedGroups: Unable to match a wire group to each input!");
+            }
+            return returnDictionary;
+        }
+
         /// <summary>
         /// This read the gate moniker and determines the number of left inputs
         /// </summary>
         /// <returns></returns>
         public int GetSize()
         {
-            var identifier = symbol.CircuitId.Substring(32, 2);
+            var identifier = Symbol.CircuitId.Substring(32, 2);
             identifier = "0x" + identifier;
             return Convert.ToInt32(identifier, 16);//This is the size of the gate as reported by logiccircuit
         }
 
-        public bool ConnectsToWireGroup(WireGroup group)
+        public bool ConnectsToLeftWireGroup(WireGroup group)
         {
             int size = GetSize();
-            Coords baseCoord = symbol.Location;
+            Coords baseCoord = Symbol.Location;
             if(size > 2)
             {
                 for (int i = 0; i < size; i++)
@@ -148,7 +180,17 @@ namespace LogicCircuitToHDLConverter
             return false;
         }
 
-        public bool MapGroupToInput(WireGroup group)
+        public bool ConnectsToRightWireGroup(WireGroup group)
+        {
+            Coords baseCoord = Symbol.Location;
+            baseCoord.x = baseCoord.x + RightPinOffset[GetSize()].OffsetX;
+            baseCoord.y = baseCoord.y + RightPinOffset[GetSize()].OffsetY;
+
+            return group.coords.Exists(x => x.x == baseCoord.x && x.y == baseCoord.y);
+        }
+
+        /*
+        public bool MapGroupToInput(List<WireGroup> groups)
         {
             int size = GetSize();
             Coords baseCoord = symbol.Location;
@@ -173,6 +215,6 @@ namespace LogicCircuitToHDLConverter
                 return group.coords.Exists(x => x.x == baseCoord.x + LeftPinOffset[1].OffsetX && x.y == baseCoord.y + LeftPinOffset[1].OffsetY);
             }
             return false;
-        }
+        }*/
     }
 }

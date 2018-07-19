@@ -38,11 +38,12 @@ namespace LogicCircuitToHDLConverter
             { "Splitter" , typeof(Splitter) },
             { "Wire" , typeof(Wire) }
         };
-
+        
         public static List<LogicalCircuit> ParseXMLDocument(string docLocation)
         {
             XmlDocument doc = new XmlDocument();
-            doc.Load(docLocation);
+            //doc.Load(docLocation);
+            doc.Load(@"C:/Users/Catalyse/Desktop/TestProject.CircuitProject");
 
             XmlNode primaryNode = doc.LastChild;
 
@@ -94,11 +95,101 @@ namespace LogicCircuitToHDLConverter
 
             logicalCircuits = CheckForCircuitLink(logicalCircuits);
 
+            for(int i = 0; i < logicalCircuits.Count; i++)
+            {
+                logicalCircuits[i] = FindWireGroupInputs(logicalCircuits[i]);
+            }
+
             Console.WriteLine("Circuit Count: " + circuits.Count);
             Console.WriteLine("Gate Count: " + gates.Count);
             Console.WriteLine("Symbol Count:" + symbols.Count);
 
             return logicalCircuits;
+        }
+
+        /// <summary>
+        /// This method iterates through a list of established output names to make sure there are no duplicates.
+        /// If there are duplicates it will come up with a new name and return it.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="circuit"></param>
+        /// <returns>A valid name</returns>
+        public static string CheckUnusedName(string name, LogicalCircuit circuit)
+        {
+            if (!circuit.outputNames.Contains(name))
+            {
+                return name;
+            }
+            else
+            {
+                var i = 1;
+                string newName;
+                while (true)
+                {
+                    newName = name + i;
+                    if (!circuit.outputNames.Contains(newName))
+                    {
+                        return newName;
+                    }
+                    i++;
+                }
+            }
+        }
+
+        public static LogicalCircuit FindWireGroupInputs(LogicalCircuit circuit)
+        {
+            foreach(var pin in circuit.circuits)
+            {
+                if(pin.GetType() == typeof(Pin))
+                {
+                    Pin temp = (Pin)pin;
+                    Coords pinLocation = new Coords(temp.Symbol.Location);
+                    if(temp.Type == PinType.Input)
+                    {
+                        pinLocation.x = pinLocation.x + temp.rightOffset.OffsetX;
+                        pinLocation.y = pinLocation.y + temp.rightOffset.OffsetY;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                    for(int i = 0; i < circuit.wireGroups.Count; i++)
+                    {
+                        if(circuit.wireGroups[i].coords.Exists(x => x.x == pinLocation.x && x.y == pinLocation.y))
+                        {
+                            circuit.wireGroups[i].inputList.Add(temp.Name);
+                            circuit.outputNames.Add(temp.Name);
+                            break;
+                        }
+                    }
+                }
+            }
+            foreach(var gate in circuit.gates)
+            {
+                Coords pinLocation = new Coords(gate.Symbol.Location);
+                pinLocation.x = pinLocation.x + gate.RightPinOffset[gate.GetSize()].OffsetX;
+                pinLocation.y = pinLocation.y + gate.RightPinOffset[gate.GetSize()].OffsetY;
+
+                for (int i = 0; i < circuit.wireGroups.Count; i++)
+                {
+                    if (circuit.wireGroups[i].coords.Exists(x => x.x == pinLocation.x && x.y == pinLocation.y))
+                    {
+                        var name = CheckUnusedName(gate.HDLGateNotation, circuit);
+                        gate.OutputName = name;
+                        circuit.outputNames.Add(name);
+                        circuit.wireGroups[i].inputList.Add(name);
+                        break;
+                    }
+                }
+            }
+            foreach(var group in circuit.wireGroups)
+            {
+                if(group.inputList.Count > 1)
+                {
+                    throw new Exception("WireGroup Source Count Exception: There cannot be more than one data source on a wire group!");
+                }
+            }
+            return circuit;
         }
 
         /// <summary>
@@ -124,7 +215,7 @@ namespace LogicCircuitToHDLConverter
             }
             foreach(var gate in gates)
             {
-                localMap[gate.symbol.ParentId].gates.Add(gate);
+                localMap[gate.Symbol.ParentId].gates.Add(gate);
             }
             foreach(var wire in wires)
             {

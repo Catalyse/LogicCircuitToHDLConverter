@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,10 +11,12 @@ namespace LogicCircuitToHDLConverter
     {
         public static void WriteDocument(List<LogicalCircuit> circuits)
         {
+            string path;
             while (true)
             {
                 Console.Write("Please enter a folder to output HDL files to: ");
-                string path = Console.ReadLine();
+                //string path = Console.ReadLine();
+                path = @"C:/Users/Catalyse/Desktop/HDLTest/test.hdl";
                 if (path != "") break;
                 Console.WriteLine("A path must be entered!");
             }
@@ -34,20 +37,19 @@ namespace LogicCircuitToHDLConverter
                 //Write Parts
                 fileString += "\tPARTS:" + Environment.NewLine;
                 fileString = WriteParts(circuit, fileString);
-                fileString += "" + Environment.NewLine;
-                fileString += "" + Environment.NewLine;
-                fileString += "" + Environment.NewLine;
+                fileString += Environment.NewLine + "}" + Environment.NewLine;
             }
+
+            File.WriteAllText(path, fileString);
         }
 
         private static string WriteParts(LogicalCircuit circuit, string fileString)
         {
-            /*foreach(var gate in circuit.gates)
+            foreach(var gate in circuit.gates)
             {
-                fileString += gate.WriteGateHDL();
+                fileString += gate.WriteGateHDL(circuit.wireGroups, circuit);
             }
-            return fileString;*/
-            return "";
+            return fileString;
         }
 
         private static string WriteINBlock(LogicalCircuit circuit, string fileString)
