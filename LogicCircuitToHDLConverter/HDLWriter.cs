@@ -50,6 +50,14 @@ namespace LogicCircuitToHDLConverter
             {
                 fileString += gate.WriteGateHDL(circuit.wireGroups, circuit);
             }
+            foreach(var inlineCircuit in circuit.circuits)
+            {
+                if(inlineCircuit.GetType() == typeof(LogicalCircuit))
+                {
+                    LogicalCircuit write = (LogicalCircuit)inlineCircuit;
+                    write.WriteCircuitHDL();
+                }
+            }
             return fileString;
         }
 

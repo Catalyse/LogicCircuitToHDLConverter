@@ -26,12 +26,13 @@ namespace LogicCircuitToHDLConverter
     {
         public string Name;
         public PinType Type = PinType.Invalid;
-        public PinSide Side = PinSide.Left;//Left is the default.  If there is no PinSide element the implication is that it is on the left side.
+        public PinSide Side = PinSide.Left;//Left is the default for input, right is the default for output
         public GatePinOffset leftOffset = new GatePinOffset(0, 1);
         public GatePinOffset rightOffset = new GatePinOffset(2, 1);
 
         public Pin(XmlNode node)
         {
+            bool sideSet = false;
             XmlNodeList children = node.ChildNodes;
             foreach (XmlNode child in children)
             {
@@ -46,14 +47,23 @@ namespace LogicCircuitToHDLConverter
                     case "lc:PinType":
                         if(child.InnerText == "Output")
                         {
+                            if(!sideSet)
+                            {
+                                Side = PinSide.Right;
+                            }
                             Type = PinType.Output;
                         }
                         else
                         {
+                            if (!sideSet)
+                            {
+                                Side = PinSide.Left;
+                            }
                             Type = PinType.Input;
                         }
                         break;
                     case "lc:PinSide":
+                        sideSet = true;
                         if(child.InnerText == "Left")
                         {
                             Side = PinSide.Left;
