@@ -4,6 +4,9 @@ using System.Xml;
 
 namespace LogicCircuitToHDLConverter
 {
+    /// <summary>
+    /// The Converter takes an XML document and turns each element into a local type the system can then use to create the HDL
+    /// </summary>
     public class Converter
     {
         private Dictionary<int, string> GateMap = new Dictionary<int, string>
@@ -39,64 +42,78 @@ namespace LogicCircuitToHDLConverter
             { "Wire" , typeof(Wire) }
         };
         
+        /// <summary>
+        /// This is the entry point to the converter, which will output a list of LogicalCircuits
+        /// </summary>
+        /// <param name="docLocation">The location of the xml document</param>
+        /// <returns>A list of organized logical circuits and their components</returns>
         public static List<LogicalCircuit> ParseXMLDocument(string docLocation)
         {
             XmlDocument doc = new XmlDocument();
             doc.Load(docLocation);
             //doc.Load(@"C:/Users/Catalyse/Desktop/TestProject.CircuitProject");
 
+            //Logical Circuit files only have two elements, the XML declaration and the circuitproject, which is what we want
             XmlNode primaryNode = doc.LastChild;
 
+            //All children of the CircuitProject
             XmlNodeList nodes = primaryNode.ChildNodes;
 
+            //Prep generic component lists
             List<CircuitBase> circuits = new List<CircuitBase>();
             List<Gate> gates = new List<Gate>();
             List<CircuitSymbol> symbols = new List<CircuitSymbol>();
             List<Wire> wires = new List<Wire>();
             List<LogicalCircuit> logicalCircuits = new List<LogicalCircuit>();
 
+            //Read through the XML and pre parse all elements
             for (int i = 0; i < nodes.Count; i++)
             {
                 Type objectType = IdentifyObject(nodes[i]);
                 if(objectType != null)
                 {
-                    if (objectType == typeof(LogicalCircuit))
+                    if (objectType == typeof(LogicalCircuit))//Logical circuits are the highest level of object
                     {
                         logicalCircuits.Add(new LogicalCircuit(nodes[i]));
                     }
-                    else if (objectType.IsSubclassOf(typeof(CircuitBase)))
+                    else if (objectType.IsSubclassOf(typeof(CircuitBase)))//This will cover all circuits that are not LogicalCircuits
                     {
                         circuits.Add(ConstructCircuitBaseType(nodes[i]));
                     }
-                    else if (objectType == typeof(Gate))
+                    else if (objectType == typeof(Gate))//This handles all gate types(CircuitSymbols with special IDs)
                     {
                         gates.Add(ConstructGateType(nodes[i]));
                     }
-                    else if (objectType == typeof(CircuitSymbol))
+                    else if (objectType == typeof(CircuitSymbol))//This handles all non gate symbols
                     {
                         symbols.Add(new CircuitSymbol(nodes[i]));
                     }
-                    else if (objectType == typeof(Wire))
+                    else if (objectType == typeof(Wire))//This handles all wires
                     {
                         wires.Add(new Wire(nodes[i]));
                     }
                 }
             }
+            //Here we organize the generic lists by their identified logical circuit
             logicalCircuits = SortByLogicalCircuit(circuits, gates, wires, logicalCircuits);
             
             foreach(var group in logicalCircuits)
             {
+                //We connect all circuitsymbols as needed.
                 circuits = ConnectSymbolsToCircuits(group.circuits, symbols, group);
                 if(group.wires.Count > 0)
                 {
+                    //Here we organize the wires into a single type which can be used to find object connection as opposed to following each wire till we find what were looking for
                     group.wireGroups = CombineWires(group.wires);
                 }
             }
 
+            //Here we check if we have nested Logical Circuits
             logicalCircuits = CheckForCircuitLink(logicalCircuits);
 
             for(int i = 0; i < logicalCircuits.Count; i++)
             {
+                //Here we map wire groups and make sure there is never more than one input into a wire group, we also create naming schemes for the connections here
                 logicalCircuits[i] = FindWireGroupInputs(logicalCircuits[i]);
             }
 
@@ -137,29 +154,38 @@ namespace LogicCircuitToHDLConverter
             }
         }
 
+        /// <summary>
+        /// This method is used as a way to map out connection names for the HDL.  It also verifies there is never more than one input to a wire group.
+        /// *****NOTE: This is NOT where we actually link wires to gates, this is ONLY for determining input and output naming of wire groups
+        /// For the most part we only care about inputs with this, because inputs are what can conflict and what we will use to determine naming
+        /// </summary>
+        /// <param name="circuit">The circuit you want to process</param>
+        /// <returns>The same circuit with parsed wiregroup inputs</returns>
         public static LogicalCircuit FindWireGroupInputs(LogicalCircuit circuit)
         {
+            //We run through pins first, as they tend to define how HDL is written in many cases
             foreach(var pin in circuit.circuits)
             {
-                if(pin.GetType() == typeof(Pin))
+                if(pin.GetType() == typeof(Pin))//We only continue if we find a pin here
                 {
-                    Pin temp = (Pin)pin;
-                    Coords pinLocation = new Coords(temp.Symbol.Location);
+                    Pin temp = (Pin)pin;//Load the pin
+                    Coords pinLocation = new Coords(temp.Symbol.Location);//Load the pins location
                     if(temp.Type == PinType.Input)
                     {
-                        pinLocation.x = pinLocation.x + temp.rightOffset.OffsetX;
+                        pinLocation.x = pinLocation.x + temp.rightOffset.OffsetX;//Correct the location for offset.
                         pinLocation.y = pinLocation.y + temp.rightOffset.OffsetY;
                         for (int i = 0; i < circuit.wireGroups.Count; i++)
                         {
-                            if (circuit.wireGroups[i].coords.Exists(x => x.x == pinLocation.x && x.y == pinLocation.y))
+                            if (circuit.wireGroups[i].coords.Exists(x => x.x == pinLocation.x && x.y == pinLocation.y))//Read through wiregroups to see if the pin connects to them
                             {
-                                circuit.wireGroups[i].inputList.Add(temp.Name);
-                                circuit.outputNames.Add(temp.Name);
+                                circuit.wireGroups[i].inputList.Add(temp.Name);//If they do add them to the input list.
+                                //As a note, this input list **SHOULD** only ever have ONE(1) item in it, if there is more than one the project is invalid.(or we messed up parsing)
+                                circuit.outputNames.Add(temp.Name);//Save the name
                                 break;
                             }
                         }
                     }
-                    else if(temp.Type == PinType.Output)
+                    else if(temp.Type == PinType.Output)//This is the same as the input section, with a different offset, AND there CAN be more than one output
                     {
                         pinLocation.x = pinLocation.x + temp.leftOffset.OffsetX;
                         pinLocation.y = pinLocation.y + temp.leftOffset.OffsetY;
@@ -179,13 +205,13 @@ namespace LogicCircuitToHDLConverter
                     }
                 }
             }
-            foreach (var gate in circuit.gates)
+            foreach (var gate in circuit.gates)//Iterate through gates to find outputs(Or inputs)
             {
-                Coords pinLocation = new Coords(gate.Symbol.Location);
-                pinLocation.x = pinLocation.x + gate.RightPinOffset[gate.GetSize()].OffsetX;
+                Coords pinLocation = new Coords(gate.Symbol.Location);//Load the location
+                pinLocation.x = pinLocation.x + gate.RightPinOffset[gate.GetSize()].OffsetX;//Correct for offset based on size.
                 pinLocation.y = pinLocation.y + gate.RightPinOffset[gate.GetSize()].OffsetY;
 
-                for (int i = 0; i < circuit.wireGroups.Count; i++)
+                for (int i = 0; i < circuit.wireGroups.Count; i++)//Run through each wiregroup
                 {
                     if (circuit.wireGroups[i].coords.Exists(x => x.x == pinLocation.x && x.y == pinLocation.y))
                     {
@@ -197,7 +223,7 @@ namespace LogicCircuitToHDLConverter
                     }
                 }
             }
-            foreach(var group in circuit.wireGroups)
+            foreach(var group in circuit.wireGroups)//Check each group to make sure there isnt more than one input
             {
                 if(group.inputList.Count > 1)
                 {

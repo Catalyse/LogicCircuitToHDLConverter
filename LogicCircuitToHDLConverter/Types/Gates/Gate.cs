@@ -191,7 +191,7 @@ namespace LogicCircuitToHDLConverter
         /// <summary>
         /// This read the gate moniker and determines the number of left inputs
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Number of outputs for the gate</returns>
         public int GetSize()
         {
             var identifier = Symbol.CircuitId.Substring(32, 2);
