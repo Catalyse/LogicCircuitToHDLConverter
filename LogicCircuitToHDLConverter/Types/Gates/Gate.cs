@@ -78,11 +78,12 @@ namespace LogicCircuitToHDLConverter
         }
 
         /// <summary>
+        /// This method is used to write the HDL for this gate
         /// NOTE: There is a CUSTOM implementation of this method for the NOT gate
         /// </summary>
-        /// <param name="inputs"></param>
-        /// <param name="outputName"></param>
-        /// <returns></returns>
+        /// <param name="groups">The wiregroups in the logicalcircuit this gate exists in.</param>
+        /// <param name="circuit">The logical circuit this gate exists in</param>
+        /// <returns>The HDL string of this gate</returns>
         public string WriteGateHDL(List<WireGroup> groups, LogicalCircuit circuit)
         {
             int size = GetSize();
@@ -90,11 +91,11 @@ namespace LogicCircuitToHDLConverter
             string tempName = "";
             string overrideOutputName = "";
 
-            bool gateConnectsToOutput = false;
-            Coords outputCoords = new Coords(Symbol.Location);
-            outputCoords.x = outputCoords.x + RightPinOffset[size].OffsetX;
+            bool gateConnectsToOutput = false;//This is used to determine if we connect to the output pin, which overrides wiregroup naming conventions
+            Coords outputCoords = new Coords(Symbol.Location);//Find the location of this gate
+            outputCoords.x = outputCoords.x + RightPinOffset[size].OffsetX;//Set location to output pin of gate
             outputCoords.y = outputCoords.y + RightPinOffset[size].OffsetY;
-            foreach(var group in groups)
+            foreach(var group in groups)//Find the wiregroup connected to the outpu
             {
                 if (ConnectsToRightWireGroup(group))
                 {
@@ -111,22 +112,23 @@ namespace LogicCircuitToHDLConverter
                 tempName = OutputName;
             }
 
+            //This block created a linked set of the base HDL gate, which allows us to support logiccircuits multi-input(up to 18, but we support as many as there is in theory)
             Dictionary<int, string> inputs = FindConnectedGroups(groups);
             if (inputs.Count == size)
             {
-                if (size > 2)
+                if (size > 2)//If there is more than two outputs we must nest with the built-in HDL gate type
                 {
-                    if (gateConnectsToOutput)
+                    if (gateConnectsToOutput)//This causes a naming override
                         tempName = Converter.CheckUnusedName(overrideOutputName, circuit);
                     else
                         tempName = Converter.CheckUnusedName(OutputName, circuit);
 
-                    output += "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + tempName + ");" + Environment.NewLine;
+                    output += "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + tempName + ");" + Environment.NewLine;//Write the initial gate
                     for (int i = 2; i < inputs.Count; i++)
                     {
                         if (i == (inputs.Count - 1))
                         {
-                            output += "\t" + HDLGateNotation + "(a=" + tempName + ", b=" + inputs[i];
+                            output += "\t" + HDLGateNotation + "(a=" + tempName + ", b=" + inputs[i];//Create another which connects one more input and the output of the previous gate.
 
                             if (gateConnectsToOutput)
                                 tempName = overrideOutputName;
@@ -136,7 +138,7 @@ namespace LogicCircuitToHDLConverter
                         }
                         else
                         {
-                            output += "\t" + HDLGateNotation + "(a=" + tempName + ", b=" + inputs[i];
+                            output += "\t" + HDLGateNotation + "(a=" + tempName + ", b=" + inputs[i];//On the last nest we connect output.
                             if (gateConnectsToOutput)
                                 tempName = Converter.CheckUnusedName(overrideOutputName, circuit);
                             else
@@ -146,7 +148,7 @@ namespace LogicCircuitToHDLConverter
                         }
                     }
                 }
-                else
+                else//If this size is two, we can write one line
                 {
                     return "\t" + HDLGateNotation + "(a=" + inputs[0] + ", b=" + inputs[1] + ", out=" + tempName + ");" + Environment.NewLine;
                 }
@@ -158,6 +160,11 @@ namespace LogicCircuitToHDLConverter
             return output;
         }
 
+        /// <summary>
+        /// This method finds all WireGroups that are connected to the gate.  The order does NOT matter when we connect them in the HDL
+        /// </summary>
+        /// <param name="groups">All wiregroups for the logical circuit</param>
+        /// <returns>A list of all inputs for the gate</returns>
         private Dictionary<int, string> FindConnectedGroups(List<WireGroup> groups)
         {
             Dictionary<int, string> returnDictionary = new Dictionary<int, string>();
@@ -181,7 +188,7 @@ namespace LogicCircuitToHDLConverter
                     }
                 }
             }
-            if(returnDictionary.Count != GetSize())
+            if(returnDictionary.Count != GetSize())//We MUST have a wiregroup for each input
             {
                 throw new Exception("Gate -- FindConnectedGroups: Unable to match a wire group to each input!");
             }
@@ -199,6 +206,7 @@ namespace LogicCircuitToHDLConverter
             return Convert.ToInt32(identifier, 16);//This is the size of the gate as reported by logiccircuit
         }
 
+        //Checks for a connection to the left side of the gate
         public bool ConnectsToLeftWireGroup(WireGroup group)
         {
             int size = GetSize();
@@ -225,6 +233,8 @@ namespace LogicCircuitToHDLConverter
             return false;
         }
 
+
+        //Checks for a connection to the output pin of the gate
         public bool ConnectsToRightWireGroup(WireGroup group)
         {
             Coords baseCoord = new Coords(Symbol.Location);
