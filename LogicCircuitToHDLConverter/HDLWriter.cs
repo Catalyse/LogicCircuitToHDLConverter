@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace LogicCircuitToHDLConverter
 {
+    /// <summary>
+    /// The HDL writer takes a list of Logical circuits and writes them to HDL
+    /// </summary>
     public static class HDLWriter
     {
         public static void WriteDocument(List<LogicalCircuit> circuits)
@@ -20,10 +23,10 @@ namespace LogicCircuitToHDLConverter
                 if (path != "") break;
                 Console.WriteLine("A path must be entered!");
             }
-            string fileString = "";
 
             foreach(var circuit in circuits)
             {
+                string fileString = "";
                 fileString += "//This file was created with LogicCircuitToHDLConverter" + Environment.NewLine;
                 fileString += "//Created by: Taylor May" + Environment.NewLine;
                 fileString += "//GitHub: https://github.com/Catalyse" + Environment.NewLine;
@@ -39,11 +42,17 @@ namespace LogicCircuitToHDLConverter
                 fileString += "\tPARTS:" + Environment.NewLine;
                 fileString = WriteParts(circuit, fileString);
                 fileString += "}" + Environment.NewLine;
+                var filePath = path + circuit.Notation + ".hdl";
+                File.WriteAllText(filePath, fileString);
             }
-
-            File.WriteAllText(path, fileString);
         }
 
+        /// <summary>
+        /// This method calls the built in write functions for each object in the parts list
+        /// </summary>
+        /// <param name="circuit">The circuit being written</param>
+        /// <param name="fileString">The current HDL output string</param>
+        /// <returns>The HDL output string with parts</returns>
         private static string WriteParts(LogicalCircuit circuit, string fileString)
         {
             foreach(var gate in circuit.gates)
@@ -55,12 +64,18 @@ namespace LogicCircuitToHDLConverter
                 if(inlineCircuit.GetType() == typeof(LogicalCircuit))
                 {
                     LogicalCircuit write = (LogicalCircuit)inlineCircuit;
-                    write.WriteCircuitHDL();
+                    write.WriteCircuitHDL(circuit.wireGroups);
                 }
             }
             return fileString;
         }
 
+        /// <summary>
+        /// This writes the IN block for the HDL file, based on the Input pins found
+        /// </summary>
+        /// <param name="circuit">Logical circuit being written</param>
+        /// <param name="fileString">The current HDL output string</param>
+        /// <returns>The HDL output string with an IN block</returns>
         private static string WriteINBlock(LogicalCircuit circuit, string fileString)
         {
             bool startedINBlock = false;
@@ -90,6 +105,12 @@ namespace LogicCircuitToHDLConverter
             return fileString;
         }
 
+        /// <summary>
+        /// This writes the OUT block for the HDL file, based on the Output pins found
+        /// </summary>
+        /// <param name="circuit">Logical circuit being written</param>
+        /// <param name="fileString">The current HDL output string</param>
+        /// <returns>The HDL output string with an OUT block</returns>
         private static string WriteOutBlock(LogicalCircuit circuit, string fileString)
         {
             bool startedOutBlock = false;
